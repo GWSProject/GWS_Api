@@ -1,0 +1,51 @@
+package gws.api.aplication.controllers;
+
+import gws.api.aplication.DTOs.SoftSkillsDTOs;
+import gws.api.aplication.models.SoftSkillsModel;
+import gws.api.aplication.repositories.SoftSkillsRepository;
+import jakarta.validation.Valid;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(value = "/softskills")
+public class SoftSkillsController {
+    @Autowired
+    SoftSkillsRepository softSkillsRepository;
+
+    @GetMapping
+    public ResponseEntity<List<SoftSkillsModel>> listarUsuarios(){
+        return ResponseEntity.status(HttpStatus.OK).body(softSkillsRepository.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Object> buscarSoftSkills(@PathVariable(value = "id") UUID id){
+
+        Optional<SoftSkillsModel> buscandoSoftSkills = softSkillsRepository.findById(id);
+
+        if (buscandoSoftSkills.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("SoftSkill não encontrado");
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(buscandoSoftSkills.get());
+    }
+
+    @PostMapping
+    public ResponseEntity<Object> criarUsuario(@RequestBody @Valid SoftSkillsDTOs softSkillsDTOs){
+        if (softSkillsRepository.findByNome(softSkillsDTOs.nome()) != null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email já cadastrado");
+        }
+
+        SoftSkillsModel novoUsuario = new SoftSkillsModel();
+        BeanUtils.copyProperties(softSkillsDTOs, novoUsuario);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(softSkillsRepository.save(novoUsuario));
+    }
+}

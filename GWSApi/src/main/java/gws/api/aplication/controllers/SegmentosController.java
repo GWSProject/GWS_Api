@@ -1,0 +1,52 @@
+package gws.api.aplication.controllers;
+
+
+import gws.api.aplication.DTOs.SegmentosDTOs;
+import gws.api.aplication.models.SegmentosModel;
+import gws.api.aplication.repositories.SegmentosRepository;
+import jakarta.validation.Valid;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@RestController
+@RequestMapping(value = "/segmentos")
+public class SegmentosController {
+    @Autowired
+    SegmentosRepository segmentosRepository;
+
+    @GetMapping
+    public ResponseEntity<List<SegmentosModel>> ListarSegmentos(){
+        return ResponseEntity.status(HttpStatus.OK).body(segmentosRepository.findAll());
+    }
+
+    @GetMapping(value = "/{id}")
+    public ResponseEntity<Object> BuscarSegmentos(@PathVariable(value = "id") UUID id){
+        Optional<SegmentosModel> buscandoSegmentos = segmentosRepository.findById(id);
+
+        if (buscandoSegmentos.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Segmento não encontrado");
+        }
+
+
+        return ResponseEntity.status(HttpStatus.OK).body(buscandoSegmentos.get());
+    }
+
+    @PostMapping
+    public ResponseEntity<Object> criarSegmentos(@RequestBody @Valid SegmentosDTOs segmentosDTOs){
+        if (segmentosRepository.findBySegmento(segmentosDTOs.segmento()) != null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("hardSkills já cadastrado");
+        }
+
+        SegmentosModel novoSegmento = new SegmentosModel();
+        BeanUtils.copyProperties(segmentosDTOs, novoSegmento);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(segmentosRepository.save(novoSegmento));
+    }
+}
