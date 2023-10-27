@@ -7,18 +7,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ClientesService {
-        private ClientesRepository clientesRepository;
 
-        @Autowired
-        public ClientesService(ClientesRepository clientesRepository) {
-
-            this.clientesRepository = clientesRepository;
-        }
-
-        public ClientesModel criarCliente(ClientesModel cliente) {
-
-            return clientesRepository.save(cliente);
-        }
 
 
 }

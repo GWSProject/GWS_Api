@@ -22,14 +22,14 @@ public class ClientesModel implements Serializable {
     @Column(name = "id_cliente", nullable = false)
     private UUID idClientes;
 
-    @Column(name = "nome_empresa", nullable = false)
-    private String nomeDaEmpresa;
-    @Column(name = "nome_cliente", nullable = false)
-    private String nomeDoCliente;
-    @Column(name = "telefone", nullable = false)
-    private String telefoneCliente;
-    @Column(name = "email", nullable = false)
-    private String emailCliente;
+    @Column(name = "nome_empresa")
+    private String nomeEmpresa;
+    @Column(name = "nome_cliente")
+    private String nomeCliente;
+    @Column(name = "telefone")
+    private String telefone;
+    @Column(name = "email")
+    private String email;
 
 
 }

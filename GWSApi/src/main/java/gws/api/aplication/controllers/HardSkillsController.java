@@ -31,7 +31,7 @@ public class HardSkillsController {
         Optional<HardSkillsModel> buscandohardSkills = hardSkillsRepository.findById(id);
 
         if (buscandohardSkills.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("hardSkill não encontrado");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("HardSkill não encontrado");
         }
 
 
@@ -41,12 +41,41 @@ public class HardSkillsController {
     @PostMapping
     public ResponseEntity<Object> criarCliente(@RequestBody @Valid HardSkillsDTOs hardSkillsDTOs){
         if (hardSkillsRepository.findByNome(hardSkillsDTOs.nome()) != null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("hardSkills já cadastrado");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("HardSkills já cadastrado");
         }
 
         HardSkillsModel novaHardSkills = new HardSkillsModel();
         BeanUtils.copyProperties(hardSkillsDTOs, novaHardSkills);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(hardSkillsRepository.save(novaHardSkills));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> editarHardSkill(@PathVariable(value = "id") UUID id, @RequestBody @Valid HardSkillsDTOs hardSkillsDTOs){
+        Optional<HardSkillsModel> buscandoHardskill = hardSkillsRepository.findById(id);
+
+        if (buscandoHardskill.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hard Skill não encontrado");
+        }
+
+        HardSkillsModel hardSkillsEditada = new HardSkillsModel();
+        BeanUtils.copyProperties(hardSkillsDTOs, hardSkillsEditada);
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(hardSkillsRepository.save(hardSkillsEditada));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deletarHardSkill(@PathVariable(value = "id") UUID id){
+
+        Optional<HardSkillsModel> hardSkillsBuscado = hardSkillsRepository.findById(id);
+
+        if (hardSkillsBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Hard Skill não encontrado");
+        }
+
+        hardSkillsRepository.delete(hardSkillsBuscado.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Hard Skill deletado com sucesso!");
+
     }
 }

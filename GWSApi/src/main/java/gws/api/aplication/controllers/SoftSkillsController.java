@@ -40,12 +40,41 @@ public class SoftSkillsController {
     @PostMapping
     public ResponseEntity<Object> criarUsuario(@RequestBody @Valid SoftSkillsDTOs softSkillsDTOs){
         if (softSkillsRepository.findByNome(softSkillsDTOs.nome()) != null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email já cadastrado");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("SoftSkill já cadastrado");
         }
 
         SoftSkillsModel novoUsuario = new SoftSkillsModel();
         BeanUtils.copyProperties(softSkillsDTOs, novoUsuario);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(softSkillsRepository.save(novoUsuario));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> editarSoftSkill(@PathVariable(value = "id") UUID id, @RequestBody @Valid SoftSkillsDTOs softSkillsDTOs){
+        Optional<SoftSkillsModel> buscandoSoftSkill = softSkillsRepository.findById(id);
+
+        if (buscandoSoftSkill.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Soft Skill não encontrado");
+        }
+
+        SoftSkillsModel softSkillsEditado = new SoftSkillsModel();
+        BeanUtils.copyProperties(softSkillsDTOs, softSkillsEditado);
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(softSkillsRepository.save(softSkillsEditado));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deletarSoftSkill(@PathVariable(value = "id") UUID id){
+
+        Optional<SoftSkillsModel> softSkillsBuscado = softSkillsRepository.findById(id);
+
+        if (softSkillsBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Soft Skill não encontrado");
+        }
+
+        softSkillsRepository.delete(softSkillsBuscado.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Soft Skill deletado com sucesso!");
+
     }
 }

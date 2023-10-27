@@ -28,7 +28,7 @@ import java.util.UUID;
     private String sobrenome;
     @Column(nullable = false,unique = true)
     private String telefone;
-    @Column(nullable = false,unique = true)
+    @Column(name = "email",nullable = false,unique = true)
     private String email;
     @Column(nullable = false,unique = false)
     private String senha;

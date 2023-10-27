@@ -1,10 +1,7 @@
 package gws.api.aplication.controllers;
 
-import gws.api.aplication.DTOs.ClientesDTOs;
 import gws.api.aplication.DTOs.UsuariosDTOs;
-import gws.api.aplication.models.ClientesModel;
 import gws.api.aplication.models.users.UsuarioModel;
-import gws.api.aplication.repositories.ClientesRepository;
 import gws.api.aplication.repositories.usersrepositories.UsuariosRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
@@ -43,12 +40,41 @@ public class UsuarioController {
     @PostMapping
     public ResponseEntity<Object> criarUsuario(@RequestBody @Valid UsuariosDTOs usuariosDtos){
         if (usuarioRepository.findByEmail(usuariosDtos.email()) != null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email já cadastrado");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuario já cadastrado");
         }
 
         UsuarioModel novoUsuario = new UsuarioModel();
         BeanUtils.copyProperties(usuariosDtos, novoUsuario);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioRepository.save(novoUsuario));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> editarUsuario(@PathVariable(value = "id") UUID id, @RequestBody @Valid UsuariosDTOs usuariosDTOs){
+        Optional<UsuarioModel> buscandoUsuario = usuarioRepository.findById(id);
+
+        if (buscandoUsuario.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente não encontrado");
+        }
+
+        UsuarioModel usuarioEditado = new UsuarioModel();
+        BeanUtils.copyProperties(usuariosDTOs, usuarioEditado);
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioRepository.save(usuarioEditado));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deletarUsuario(@PathVariable(value = "id") UUID id){
+
+        Optional<UsuarioModel> usuarioBuscado = usuarioRepository.findById(id);
+
+        if (usuarioBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario não encontrado");
+        }
+
+        usuarioRepository.delete(usuarioBuscado.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Usuario deletado com sucesso!");
+
     }
 }

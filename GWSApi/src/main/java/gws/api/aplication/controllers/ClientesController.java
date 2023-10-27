@@ -4,7 +4,6 @@ import gws.api.aplication.DTOs.ClientesDTOs;
 import gws.api.aplication.models.ClientesModel;
 import gws.api.aplication.repositories.ClientesRepository;
 import jakarta.validation.Valid;
-import org.hibernate.type.descriptor.jdbc.VarcharJdbcType;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,7 +41,7 @@ public class ClientesController {
     @PostMapping
     public ResponseEntity<Object> criarCliente(@RequestBody @Valid ClientesDTOs clientesDTOs){
         if (clientesRepository.findByEmail(clientesDTOs.emailCliente()) != null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email já cadastrado");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cliente já cadastrado");
         }
 
         ClientesModel novoCliente = new ClientesModel();
@@ -50,5 +49,35 @@ public class ClientesController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(clientesRepository.save(novoCliente));
     }
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> editarCliente(@PathVariable(value = "id") UUID id, @RequestBody @Valid ClientesDTOs clientesDTOs){
+        Optional<ClientesModel> buscandoCliente = clientesRepository.findById(id);
+
+        if (buscandoCliente.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente não encontrado");
+        }
+
+        ClientesModel clienteEditado = new ClientesModel();
+        BeanUtils.copyProperties(clientesDTOs, clienteEditado);
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(clientesRepository.save(clienteEditado));
+    }
+
+    @DeleteMapping("/{idCliente}")
+    public ResponseEntity<Object> deletarCliente(@PathVariable(value = "idCliente") UUID id){
+
+        Optional<ClientesModel> clienteBuscado = clientesRepository.findById(id);
+
+        if (clienteBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente não encontrado");
+        }
+
+        clientesRepository.delete(clienteBuscado.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Cliente deletado com sucesso!");
+
+    }
 
 }
+
+

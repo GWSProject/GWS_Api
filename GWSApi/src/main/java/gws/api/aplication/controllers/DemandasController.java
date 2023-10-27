@@ -40,12 +40,41 @@ public class DemandasController {
     @PostMapping
     public ResponseEntity<Object> criarCliente(@RequestBody @Valid DemandasDTOs DemandasDTOs){
         if (demandasRepository.findByTitulo(DemandasDTOs.titulo()) != null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Titulo já cadastrado");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Demanda já cadastrado");
         }
 
         DemandasModel novaDemanda = new DemandasModel();
         BeanUtils.copyProperties(DemandasDTOs, novaDemanda);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(demandasRepository.save(novaDemanda));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> editarDemanda(@PathVariable(value = "id") UUID id, @RequestBody @Valid DemandasDTOs demandasDTOs){
+        Optional<DemandasModel> buscandoDemanda = demandasRepository.findById(id);
+
+        if (buscandoDemanda.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Demanda não encontrado");
+        }
+
+        DemandasModel demandaEditado = new DemandasModel();
+        BeanUtils.copyProperties(demandasDTOs, demandaEditado);
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(demandasRepository.save(demandaEditado));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deletarDemanda(@PathVariable(value = "id") UUID id){
+
+        Optional<DemandasModel> demandaBuscado = demandasRepository.findById(id);
+
+        if (demandaBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente não encontrado");
+        }
+
+        demandasRepository.delete(demandaBuscado.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Cliente deletado com sucesso!");
+
     }
 }

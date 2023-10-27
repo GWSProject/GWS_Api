@@ -49,4 +49,33 @@ public class SegmentosController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(segmentosRepository.save(novoSegmento));
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Object> editarSegmentos(@PathVariable(value = "id") UUID id, @RequestBody @Valid SegmentosDTOs segmentosDTOs){
+        Optional<SegmentosModel> buscandoSegmentos = segmentosRepository.findById(id);
+
+        if (buscandoSegmentos.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Segmentos não encontrado");
+        }
+
+        SegmentosModel segmentoEditado = new SegmentosModel();
+        BeanUtils.copyProperties(segmentosDTOs, segmentoEditado);
+
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(segmentosRepository.save(segmentoEditado));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Object> deletarSegmento(@PathVariable(value = "id") UUID id){
+
+        Optional<SegmentosModel> segmentoBuscado = segmentosRepository.findById(id);
+
+        if (segmentoBuscado.isEmpty()){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente não encontrado");
+        }
+
+        segmentosRepository.delete(segmentoBuscado.get());
+        return ResponseEntity.status(HttpStatus.OK).body("Cliente deletado com sucesso!");
+
+    }
 }
