@@ -37,7 +37,7 @@ import java.util.*;
     private String email;
     @JsonIgnore
     private String senha;
-    private LocalDateTime dataCadastro;
+    private LocalDateTime data_cadastro;
     private LocalDate data_ferias;
     private String designacao;
     private String cidade;

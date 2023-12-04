@@ -36,12 +36,12 @@ public class DemandasModel implements Serializable {
     private String logo;
     @Column(nullable = false,unique = false)
     private String descricao;
-    @Column(nullable = false,unique = false)
-    private String prioridade;
+    @Column(nullable = false,unique = false, columnDefinition = "BIT")
+    private TipoPrioridadeModel prioridade;
     @Column(nullable = false,unique = false)
     private boolean privacidade;
-    @Column(nullable = false,unique = false)
-    private String status;
+    @Column(nullable = false,unique = false,columnDefinition = "BIT")
+    private TipoStatusModel status;
     @Column(nullable = false,unique = false)
     private LocalDateTime data_inicio;
     @Column(nullable = false,unique = false)
@@ -59,7 +59,8 @@ public class DemandasModel implements Serializable {
             inverseJoinColumns = @JoinColumn(name = "id_usuario",unique = false)
 
     )
-    @org.hibernate.annotations.Index(name = "idx_demanda_usuario")
+
+
     private Set<UsuarioModel> id_usuarios = new HashSet<>();
 
     @ManyToMany
@@ -71,6 +72,7 @@ public class DemandasModel implements Serializable {
     )
     @org.hibernate.annotations.Index(name = "idx_demanda_segmento")
     private Set<SegmentosModel> id_segmentos = new HashSet<>();
+
     @ManyToOne
     @JoinColumn(name = "id_cliente", referencedColumnName = "id_cliente")
     private ClientesModel id_cliente;

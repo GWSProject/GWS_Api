@@ -3,7 +3,6 @@ package com.gws.api.apigws.services;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.xml.crypto.Data;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -14,6 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+
 @Service
 public class FileUploadService {
     private final Path diretorioImg = Paths.get(System.getProperty("user.dir") + "\\src\\main\\resources\\static\\img");
@@ -22,6 +22,8 @@ public class FileUploadService {
     }
 
 
+    private final Path diretorioAnx = Paths.get(System.getProperty("user.dir") + "\\src\\main\\resources\\static\\anexos");
+    public Path getDiretorioAnx() {return diretorioAnx;}
 
     public String fazerUpload(MultipartFile imagem) throws IOException {
         if (imagem.isEmpty()){
@@ -45,6 +47,26 @@ public class FileUploadService {
         return nomeImagem;
     }
 
+    public String fazerMultiploUpload(MultipartFile anexo, String nomeDemanda  , int anexoN) throws IOException {
+        if (anexo.isEmpty()){
+            System.out.println("anexo vazia");
+            return null;
+        }
 
+        String[] nomeArquivoArray = anexo.getOriginalFilename().split("\\."); // NomeArquivo.png
+        String novoNome = LocalDate.now().format(DateTimeFormatter.ofPattern("ddMMyyyy"));
+        String extensaoArquivo = nomeArquivoArray[nomeArquivoArray.length - 1];
+
+        String nomeAnexo = nomeDemanda+anexoN+"("+novoNome+")"+ "." + extensaoArquivo;
+
+        File imagemCriada = new File(diretorioAnx+ "\\" +nomeAnexo);
+
+        BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(imagemCriada));
+
+        stream.write(anexo.getBytes());
+        stream.close();
+
+        return nomeAnexo;
+    }
 
 }

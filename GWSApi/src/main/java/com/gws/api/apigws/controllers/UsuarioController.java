@@ -14,9 +14,11 @@ import com.gws.api.apigws.services.FileUploadService;
 import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomCollectionEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/usuarios")
@@ -49,12 +52,13 @@ public class UsuarioController {
     @GetMapping
     public ResponseEntity<List<UsuarioModel>> listarUsuarios(){
 
-        for (UsuarioModel usuarioModel :usuarioRepository.findAll()) {
-            Path urlImg = fileUploadService.getDiretorioImg();
-            String usuarioimg = usuarioModel.getUrl_img();
-            usuarioModel.setUrl_img(urlImg + "\\" + usuarioimg);
-        }
+        for (UsuarioModel usuario : usuarioRepository.findAll()) {
+            String fileFoto = fileUploadService.getDiretorioImg().toString();
+            String strFoto = usuario.getUrl_img();
 
+            String linkFoto = fileFoto+strFoto;
+            usuario.setUrl_img(linkFoto);
+        }
         return ResponseEntity.status(HttpStatus.OK).body(usuarioRepository.findAll());
     }
 
@@ -75,19 +79,12 @@ public class UsuarioController {
     }
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
-    public ResponseEntity<Object> criarUsuario(@ModelAttribute @Valid UsuariosDTOs usuariosDtos){
-        if (usuarioRepository.findByEmail(usuariosDtos.email()) != null){
+    public ResponseEntity<Object> criarUsuario(@ModelAttribute @Valid UsuariosDTOs usuariosDtos) {
+        if (usuarioRepository.findByEmail(usuariosDtos.email()) != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuario já cadastrado");
         }
 
-        List<DemandasModel> demandasList = demandasRepository.findAllById(usuariosDtos.id_demandas());
-        Set<DemandasModel> demandasAssociadas = new HashSet<>(demandasList);
 
-        List<SoftSkillsModel> softSkillsList = softSkillsRepository.findAllById(usuariosDtos.id_softSkills());
-        Set<SoftSkillsModel> softSkillsAssociadas = new HashSet<>(softSkillsList);
-
-        List<HardSkillsModel> hardSkillsList = hardSkillsRepository.findAllById(usuariosDtos.id_hardskills());
-        Set<HardSkillsModel> hardSkillsAssociadas = new HashSet<>(hardSkillsList);
 
         UsuarioModel novoUsuario = new UsuarioModel();
         BeanUtils.copyProperties(usuariosDtos, novoUsuario);
@@ -109,62 +106,87 @@ public class UsuarioController {
             dataferias = converterDataTime.StringToDate(usuariosDtos.dataDaferias());
         }catch (Exception e){
             throw new RuntimeException(e);
+
         }
 
         novoUsuario.setUrl_img(urlImagem);
-        novoUsuario.setDataCadastro(dataAtual);
+        novoUsuario.setData_cadastro(dataAtual);
         novoUsuario.setHoras_semanais(horassemanais);
         novoUsuario.setData_ferias(dataferias);
 
 
+        List<UUID> demandasConvert = usuariosDtos.id_demandas().stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
 
-        if (demandasAssociadas.containsAll(demandasList)){
+        List<DemandasModel> demandasList = demandasRepository.findAllById(demandasConvert);
+        if (novoUsuario.getId_demandas().containsAll(demandasList)){
+
+            Set<DemandasModel> demandasAssociadas = new HashSet<>(demandasList);
             novoUsuario.setId_demandas(demandasAssociadas);
-        }else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Demanadas Não encontradas");
+
         }
 
-        if (softSkillsAssociadas.containsAll(softSkillsList)){
+        List<UUID> softConvert = usuariosDtos.id_demandas().stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
+
+        List<SoftSkillsModel> softSkillsList = softSkillsRepository.findAllById(softConvert);
+        if (novoUsuario.getId_softskill().containsAll(softSkillsList)){
+
+            Set<SoftSkillsModel> softSkillsAssociadas = new HashSet<>(softSkillsList);
             novoUsuario.setId_softskill(softSkillsAssociadas);
-        }else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("SoftSkills Não encontradas");
+
         }
 
-        if (hardSkillsAssociadas.containsAll(hardSkillsList)){
+        List<UUID> hardConvert = usuariosDtos.id_demandas().stream()
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
+
+        List<HardSkillsModel> hardSkillsList = hardSkillsRepository.findAllById(hardConvert);
+        if (novoUsuario.getId_hardskill().containsAll(hardSkillsList)) {
+
+            Set<HardSkillsModel> hardSkillsAssociadas = new HashSet<>(hardSkillsList);
             novoUsuario.setId_hardskill(hardSkillsAssociadas);
-        }else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("HardSkills Não encontradas");
-        }
 
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioRepository.save(novoUsuario));
     }
 
     @PutMapping(value = "/{id}" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Object> editarUsuario(@PathVariable(value = "id") UUID id, @ModelAttribute @Valid UsuariosDTOs usuariosDTOs){
+    public ResponseEntity<Object> editarUsuario(@PathVariable(value = "id") UUID id, @ModelAttribute @Valid UsuariosDTOs usuariosDtos){
         Optional<UsuarioModel> buscandoUsuario = usuarioRepository.findById(id);
 
         if (buscandoUsuario.isEmpty()){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cliente não encontrado");
         }
 
-        List<DemandasModel> demandasList = demandasRepository.findAllById(usuariosDTOs.id_demandas());
-        Set<DemandasModel> demandasAssociadas = new HashSet<>(demandasList);
+        Set<DemandasModel> demandasAssociadas = new HashSet<>();
+        Set<SoftSkillsModel> softSkillsAssociadas = new HashSet<>();
+        Set<HardSkillsModel> hardSkillsAssociadas = new HashSet<>();
 
-        List<SoftSkillsModel> softSkillsList = softSkillsRepository.findAllById(usuariosDTOs.id_softSkills());
-        Set<SoftSkillsModel> softSkillsAssociadas = new HashSet<>(softSkillsList);
+        if (!usuariosDtos.id_demandas().isEmpty()){
+            List<DemandasModel> demandasList = demandasRepository.findAllById(Collections.singleton(UUID.fromString(String.valueOf(usuariosDtos.id_demandas()))));
+        demandasAssociadas.addAll(demandasList);}
 
-        List<HardSkillsModel> hardSkillsList = hardSkillsRepository.findAllById(usuariosDTOs.id_hardskills());
-        Set<HardSkillsModel> hardSkillsAssociadas = new HashSet<>(hardSkillsList);
+        if (!usuariosDtos.id_softSkills().isEmpty()){
+            List<SoftSkillsModel> softSkillsList = softSkillsRepository.findAllById(Collections.singleton(UUID.fromString(String.valueOf(usuariosDtos.id_softSkills()))));
+        softSkillsAssociadas.addAll(softSkillsList);}
+
+        if (!usuariosDtos.id_hardskills().isEmpty()){
+            List<HardSkillsModel> hardSkillsList = hardSkillsRepository.findAllById(Collections.singleton(UUID.fromString(String.valueOf(usuariosDtos.id_hardskills()))));
+        hardSkillsAssociadas.addAll(hardSkillsList);}
+
 
 
         UsuarioModel usuarioEditado = new UsuarioModel();
-        BeanUtils.copyProperties(usuariosDTOs, usuarioEditado);
+        BeanUtils.copyProperties(usuariosDtos, usuarioEditado);
 
         String urlImagem;
 
         try{
-            urlImagem = fileUploadService.fazerUpload(usuariosDTOs.foto());
+            urlImagem = fileUploadService.fazerUpload(usuariosDtos.foto());
         }catch (IOException e){
             throw new RuntimeException(e);
         }
@@ -173,8 +195,8 @@ public class UsuarioController {
         LocalDate dataferias;
 
         try{
-            horassemanais = converterDataTime.StringToDateTime(usuariosDTOs.horasDaSemana());
-            dataferias = converterDataTime.StringToDate(usuariosDTOs.dataDaferias());
+            horassemanais = converterDataTime.StringToDateTime(usuariosDtos.horasDaSemana());
+            dataferias = converterDataTime.StringToDate(usuariosDtos.dataDaferias());
         }catch (Exception e){
             throw new RuntimeException(e);
         }
@@ -183,23 +205,27 @@ public class UsuarioController {
         usuarioEditado.setHoras_semanais(horassemanais);
         usuarioEditado.setData_ferias(dataferias);
 
-        if (demandasAssociadas.containsAll(demandasList)){
+
+
+        if (usuarioEditado.getId_demandas().containsAll(demandasAssociadas)){
             usuarioEditado.setId_demandas(demandasAssociadas);
         }else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Demanadas Não encontradas");
         }
 
-        if (softSkillsAssociadas.containsAll(softSkillsList)){
+        if (usuarioEditado.getId_softskill().containsAll(softSkillsAssociadas)){
             usuarioEditado.setId_softskill(softSkillsAssociadas);
         }else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("SoftSkills Não encontradas");
         }
 
-        if (hardSkillsAssociadas.containsAll(hardSkillsList)){
+        if (usuarioEditado.getId_hardskill().containsAll(hardSkillsAssociadas)){
             usuarioEditado.setId_hardskill(hardSkillsAssociadas);
         }else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("HardSkills Não encontradas");
         }
+
+
 
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioRepository.save(usuarioEditado));
     }
